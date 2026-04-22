@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-require_once '../includes/db.php';
+require_once dirname(__DIR__) . '/includes/db.php';
 
 try {
     $stmt = $pdo->prepare("
@@ -17,7 +17,8 @@ try {
     $images = $stmt->fetchAll();
     
     foreach ($images as &$img) {
-        $img['image_url'] = '/uploads/images/' . $img['filename'];
+        // Updated path for subfolder
+        $img['image_url'] = '/portfolio_of_evidence/uploads/images/' . $img['filename'];
         $img['story'] = htmlspecialchars($img['story']);
         $img['hyperlink'] = $img['hyperlink'] ?? null;
     }

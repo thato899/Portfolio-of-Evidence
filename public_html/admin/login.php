@@ -3,7 +3,7 @@ session_start();
 
 // Simple hardcoded credentials - change these!
 $valid_username = 'admin';
-$valid_password = 'ChangeThisPassword123';
+$valid_password = 'Th0658307279#';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
