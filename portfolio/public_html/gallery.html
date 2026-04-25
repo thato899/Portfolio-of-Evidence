@@ -52,6 +52,8 @@
             border: 1px solid #d4d4d4;
             padding: 0.5rem 1rem;
             color: #4a4a4a;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         .filter-btn.active {
             background: #2d2d2d;
@@ -67,7 +69,7 @@
 <body>
     <div class="max-w-7xl mx-auto px-4 py-12">
         <header class="border-b border-gray-200 pb-8 mb-8">
-            <a href="/" class="text-gray-600 hover:text-black inline-block mb-4">&larr; Back to Portfolio</a>
+            <a href="index.html" class="text-gray-600 hover:text-black inline-block mb-4">&larr; Back to Portfolio</a>
             <h1 class="text-4xl font-light tracking-tight">Project Gallery</h1>
             <p class="text-gray-600 mt-2">Each image tells a story. Click to read more.</p>
         </header>
@@ -100,7 +102,7 @@
 
         async function loadGallery() {
             try {
-                const response = await fetch('/api/gallery.php');
+                const response = await fetch('/portfolio_of_evidence/api/gallery.php');
                 const result = await response.json();
                 
                 if (result.success && result.data.length > 0) {
@@ -109,7 +111,7 @@
                 } else {
                     document.getElementById('gallery-container').innerHTML = `
                         <div class="gallery-card p-8 text-center text-gray-500 col-span-full">
-                            No stories added yet. Check back soon.
+                            No stories added yet. Go to admin area to upload images and write stories.
                         </div>
                     `;
                 }
@@ -137,7 +139,7 @@
                 <div class="gallery-card overflow-hidden" onclick="openModal(${JSON.stringify(img).replace(/"/g, '&quot;')})">
                     <img src="${img.image_url}" alt="${img.project_title}" class="w-full h-64 object-cover">
                     <div class="p-5">
-                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">${img.project_title}</p>
+                        <p class="text-xs text-gray-400 uppercase tracking-wide mb-2">${escapeHtml(img.project_title)}</p>
                         <p class="text-gray-700 line-clamp-3 text-sm leading-relaxed">${escapeHtml(img.story.substring(0, 120))}${img.story.length > 120 ? '...' : ''}</p>
                         ${img.hyperlink ? '<p class="text-gray-400 text-xs mt-3">Contains external link</p>' : ''}
                     </div>
@@ -177,16 +179,28 @@
             return div.innerHTML;
         }
 
-        // Filter functionality
+        // Updated filter functionality with proper By Project support
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 
                 const filter = this.getAttribute('data-filter');
-                if (filter === 'all') {
-                    renderGallery(allImages);
+                let filteredImages = [...allImages];
+                
+                if (filter === 'project') {
+                    // Show one representative image per project
+                    const uniqueProjects = new Map();
+                    filteredImages.forEach(img => {
+                        if (!uniqueProjects.has(img.project_title)) {
+                            uniqueProjects.set(img.project_title, img);
+                        }
+                    });
+                    filteredImages = Array.from(uniqueProjects.values());
                 }
+                // 'all' filter shows all images (no filtering needed)
+                
+                renderGallery(filteredImages);
             });
         });
 

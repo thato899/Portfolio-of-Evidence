@@ -42,8 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $safe_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $original_name);
             $filename = $timestamp . '_' . $safe_name;
             
-            // Absolute path for your hosting
-            $upload_dir = dirname(dirname(__DIR__)) . '/uploads/' . $filetype . 's/';
+            // Correct path for portfolio_of_evidence subfolder
+            $upload_dir = '/home/eduques1/public_html/portfolio_of_evidence/uploads/' . $filetype . 's/';
             $upload_path = $upload_dir . $filename;
             
             if (!file_exists($upload_dir)) {
@@ -51,17 +51,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             
             if (move_uploaded_file($file['tmp_name'], $upload_path)) {
+                // Store only the filename in database, not the full path
                 $stmt = $pdo->prepare("
                     INSERT INTO media (project_id, filename, filepath, filetype) 
                     VALUES (?, ?, ?, ?)
                 ");
-                $stmt->execute([$project_id, $filename, $upload_path, $filetype]);
+                $stmt->execute([$project_id, $filename, $filename, $filetype]);
                 $media_id = $pdo->lastInsertId();
                 
                 header("Location: edit-story.php?id=$media_id&success=1");
                 exit;
             } else {
-                $upload_error = 'Failed to move uploaded file';
+                $upload_error = 'Failed to move uploaded file. Check folder permissions.';
             }
         }
     } else {
