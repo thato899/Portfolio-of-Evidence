@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio | Projects & Work</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+        }
+        body {
+            background-color: #fafafa;
+            color: #1a1a1a;
+        }
+        .card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            transition: all 0.2s ease;
+        }
+        .card:hover {
+            border-color: #a0a0a0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .btn {
+            background: #2d2d2d;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            transition: background 0.2s ease;
+        }
+        .btn:hover {
+            background: #000000;
+        }
+        .link {
+            color: #2d2d2d;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        .link:hover {
+            color: #000000;
+            border-bottom-color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-6xl mx-auto px-4 py-12">
+        <header class="border-b border-gray-200 pb-8 mb-12">
+            <h1 class="text-4xl font-light tracking-tight mb-2">Portfolio</h1>
+            <p class="text-gray-600 text-lg font-light">Software Engineer & Creator</p>
+        </header>
+
+        <section class="mb-16">
+            <h2 class="text-2xl font-light mb-6">Featured Projects</h2>
+            <div id="projects-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card p-6 text-center text-gray-500">Loading projects...</div>
+            </div>
+        </section>
+
+        <section class="mb-16">
+            <h2 class="text-2xl font-light mb-6">Gallery</h2>
+            <div id="gallery-preview" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6 text-center text-gray-500">Loading gallery...</div>
+            </div>
+            <div class="mt-8 text-center">
+                <a href="gallery.html" class="btn inline-block">View Full Gallery</a>
+            </div>
+        </section>
+
+        <footer class="border-t border-gray-200 pt-8 text-center text-gray-500 text-sm">
+            <p>Software Portfolio</p>
+        </footer>
+    </div>
+
+    <script>
+        async function loadProjects() {
+            try {
+                const response = await fetch('/portfolio_of_evidence/api/projects.php');
+                const result = await response.json();
+                
+                if (result.success && result.data.length > 0) {
+                    const container = document.getElementById('projects-container');
+                    container.innerHTML = result.data.map(project => `
+                        <div class="card p-6">
+                            <h3 class="text-xl font-medium mb-2">${escapeHtml(project.title)}</h3>
+                            <p class="text-gray-600 mb-3">${escapeHtml(project.description.substring(0, 150))}${project.description.length > 150 ? '...' : ''}</p>
+                            <p class="text-sm text-gray-400">${new Date(project.date_created).toLocaleDateString()}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('projects-container').innerHTML = '<div class="card p-6 text-center text-gray-500">No projects added yet</div>';
+                }
+            } catch(error) {
+                console.error('Error loading projects:', error);
+                document.getElementById('projects-container').innerHTML = '<div class="card p-6 text-center text-red-600">Error loading projects</div>';
+            }
+        }
+
+        async function loadGalleryPreview() {
+            try {
+                const response = await fetch('/portfolio_of_evidence/api/gallery.php');
+                const result = await response.json();
+                
+                if (result.success && result.data.length > 0) {
+                    const previewImages = result.data.slice(0, 3);
+                    const container = document.getElementById('gallery-preview');
+                    container.innerHTML = previewImages.map(img => `
+                        <div class="card overflow-hidden">
+                            <img src="${img.image_url}" alt="${img.project_title}" class="w-full h-48 object-cover">
+                            <div class="p-4">
+                                <p class="text-sm text-gray-600">${escapeHtml(img.story.substring(0, 80))}${img.story.length > 80 ? '...' : ''}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('gallery-preview').innerHTML = '<div class="card p-6 text-center text-gray-500 col-span-full">No stories added yet. Upload images and write stories in admin area.</div>';
+                }
+            } catch(error) {
+                console.error('Error loading gallery:', error);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        loadProjects();
+        loadGalleryPreview();
+    </script>
+</body>
+</html>
