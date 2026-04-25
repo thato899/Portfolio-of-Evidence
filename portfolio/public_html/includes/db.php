@@ -1,9 +1,9 @@
 <?php
 // Database configuration for domains.co.za hosting
 $host = 'localhost';
-$dbname = 'your_database_name';
-$username = 'your_database_username';
-$password = 'your_database_password';
+$dbname = 'eduques1_Portforlio';
+$username = 'eduques1_thato';
+$password = 'Th0658307279#';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);

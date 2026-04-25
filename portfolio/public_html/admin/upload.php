@@ -4,12 +4,11 @@ if (!isset($_SESSION['logged_in'])) {
     header('Location: login.php');
     exit;
 }
-require_once '../includes/db.php';
+require_once dirname(__DIR__) . '/includes/db.php';
 
 // Get projects for dropdown
 $projects = $pdo->query("SELECT id, title FROM projects ORDER BY date_created DESC")->fetchAll();
 
-$upload_success = null;
 $upload_error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $original_name = $file['name'];
         $extension = strtolower(pathinfo($original_name, PATHINFO_EXTENSION));
         
-        // Validate file type
         $allowed_images = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
         $allowed_docs = ['pdf', 'doc', 'docx', 'txt'];
         $allowed_videos = ['mp4', 'webm', 'mov'];
@@ -40,23 +38,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$is_valid) {
             $upload_error = 'Invalid file type for selected category';
         } else {
-            // Generate unique filename
             $timestamp = time();
             $safe_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $original_name);
             $filename = $timestamp . '_' . $safe_name;
             
-            // Determine upload path
-            $upload_dir = '../uploads/' . $filetype . 's/';
+            // Absolute path for your hosting
+            $upload_dir = dirname(dirname(__DIR__)) . '/uploads/' . $filetype . 's/';
             $upload_path = $upload_dir . $filename;
             
-            // Create directory if it doesn't exist
             if (!file_exists($upload_dir)) {
                 mkdir($upload_dir, 0755, true);
             }
             
-            // Move uploaded file
             if (move_uploaded_file($file['tmp_name'], $upload_path)) {
-                // Save to database
                 $stmt = $pdo->prepare("
                     INSERT INTO media (project_id, filename, filepath, filetype) 
                     VALUES (?, ?, ?, ?)
@@ -64,8 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$project_id, $filename, $upload_path, $filetype]);
                 $media_id = $pdo->lastInsertId();
                 
-                $upload_success = 'File uploaded successfully';
-                // Redirect to add story
                 header("Location: edit-story.php?id=$media_id&success=1");
                 exit;
             } else {
@@ -156,13 +148,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="w-full rounded">Upload and Continue to Story</button>
             </form>
         </div>
-        
-        <div class="card p-8 mt-6">
-            <h2 class="text-xl font-light mb-4">Recent Uploads</h2>
-            <div id="recent-uploads" class="space-y-2">
-                Loading...
-            </div>
-        </div>
     </div>
     
     <script>
@@ -193,24 +178,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 fileName.textContent = fileInput.files[0].name;
             }
         });
-        
-        async function loadRecentUploads() {
-            const response = await fetch('/api/gallery.php');
-            const result = await response.json();
-            if (result.success && result.data.length > 0) {
-                const recent = result.data.slice(0, 5);
-                document.getElementById('recent-uploads').innerHTML = recent.map(item => `
-                    <div class="flex justify-between items-center border-b border-gray-100 py-2">
-                        <span class="text-sm">${item.project_title}</span>
-                        <a href="edit-story.php?id=${item.id}" class="text-gray-600 hover:text-black text-sm">Edit Story</a>
-                    </div>
-                `).join('');
-            } else {
-                document.getElementById('recent-uploads').innerHTML = '<div class="text-gray-500 text-sm">No uploads yet</div>';
-            }
-        }
-        
-        loadRecentUploads();
     </script>
 </body>
 </html>

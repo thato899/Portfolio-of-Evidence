@@ -1,29 +1,37 @@
 <?php
 header('Content-Type: application/json');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Access-Control-Allow-Origin: *');
-require_once '../includes/db.php';
+require_once dirname(__DIR__) . '/includes/db.php';
 
 try {
+    // Simpler query without JOIN to debug
     $stmt = $pdo->prepare("
-        SELECT m.*, p.title as project_title 
-        FROM media m 
-        LEFT JOIN projects p ON m.project_id = p.id 
-        WHERE m.filetype = 'image' 
-        AND m.story IS NOT NULL 
-        AND m.story != ''
-        ORDER BY m.display_order, m.created_at DESC
+        SELECT * FROM media 
+        WHERE filetype = 'image' 
+        AND story IS NOT NULL 
+        AND story != ''
+        ORDER BY created_at DESC
     ");
     $stmt->execute();
     $images = $stmt->fetchAll();
     
+    // Manually add project title if needed
     foreach ($images as &$img) {
-        $img['image_url'] = '/uploads/images/' . $img['filename'];
+        // Get project title separately
+        $projStmt = $pdo->prepare("SELECT title FROM projects WHERE id = ?");
+        $projStmt->execute([$img['project_id']]);
+        $project = $projStmt->fetch();
+        
+        $img['project_title'] = $project ? $project['title'] : 'Unknown Project';
+        $img['image_url'] = '/portfolio_of_evidence/uploads/images/' . $img['filename'];
         $img['story'] = htmlspecialchars($img['story']);
         $img['hyperlink'] = $img['hyperlink'] ?? null;
     }
     
     echo json_encode([
         'success' => true,
+        'count' => count($images),
         'data' => $images
     ]);
 } catch(Exception $e) {
